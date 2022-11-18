@@ -16,7 +16,7 @@ parser.add_argument('--input-dropout-prob', type=float, default=.2)
 
 parser.add_argument('--task-number', type=int, default=8)
 parser.add_argument('--epochs-per-task', type=int, default=3)
-parser.add_argument('--lamda', type=float, default=40)
+parser.add_argument('--lamda', type=float, default=1e-1)
 parser.add_argument('--lr', type=float, default=1e-1)
 parser.add_argument('--weight-decay', type=float, default=0)
 parser.add_argument('--batch-size', type=int, default=128)
@@ -27,6 +27,8 @@ parser.add_argument('--no-gpus', action='store_false', dest='cuda')
 parser.add_argument('--eval-log-interval', type=int, default=250)
 parser.add_argument('--loss-log-interval', type=int, default=250)
 parser.add_argument('--consolidate', action='store_true')
+parser.add_argument('--secder_mode', action='store_true')
+parser.add_argument('--abs_mode', action='store_true')
 
 
 if __name__ == '__main__':
@@ -59,6 +61,8 @@ if __name__ == '__main__':
         hidden_dropout_prob=args.hidden_dropout_prob,
         input_dropout_prob=args.input_dropout_prob,
         lamda=args.lamda,
+        secder_mode=args.secder_mode,
+        abs_mode=args.abs_mode
     )
 
     # initialize the parameters.

@@ -13,7 +13,9 @@ class MLP(nn.Module):
                  hidden_layer_num=2,
                  hidden_dropout_prob=.5,
                  input_dropout_prob=.2,
-                 lamda=40):
+                 lamda=40,
+                 secder_mode=True,
+                 abs_mode=True):
         # Configurations.
         super().__init__()
         self.input_size = input_size
@@ -23,6 +25,8 @@ class MLP(nn.Module):
         self.hidden_dropout_prob = hidden_dropout_prob
         self.output_size = output_size
         self.lamda = lamda
+        self.secder_mode = secder_mode
+        self.abs_mode = abs_mode
 
         # Layers.
         self.layers = nn.ModuleList([
@@ -72,12 +76,29 @@ class MLP(nn.Module):
                 break
         # estimate the fisher information of the parameters.
         loglikelihoods = torch.cat(loglikelihoods).unbind()
-        loglikelihood_grads = zip(*[autograd.grad(
+        temp = [autograd.grad(
             l, self.parameters(),
-            retain_graph=(i < len(loglikelihoods))
-        ) for i, l in enumerate(loglikelihoods, 1)])
+            retain_graph=(i <= len(loglikelihoods)),
+            create_graph=True
+        ) for i, l in enumerate(loglikelihoods, 1)]
+
+        if self.secder_mode:
+            temp = [sum([x.sum() for x in g]) for g in temp]
+            if self.abs_mode:
+                fn = torch.abs
+            else:
+                fn = lambda x: x
+            temp = [map(fn ,autograd.grad(
+                l, self.parameters(),
+                retain_graph=(i < len(temp))
+            )) for i, l in enumerate(temp, 1)]
+        
+        loglikelihood_grads = zip(*temp)
         loglikelihood_grads = [torch.stack(gs) for gs in loglikelihood_grads]
-        fisher_diagonals = [(g ** 2).mean(0) for g in loglikelihood_grads]
+        if self.secder_mode:
+            fisher_diagonals = [(g).mean(0) for g in loglikelihood_grads]
+        else:
+            fisher_diagonals = [(g ** 2).mean(0) for g in loglikelihood_grads]
         param_names = [
             n.replace('.', '__') for n, p in self.named_parameters()
         ]
