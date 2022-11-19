@@ -1,10 +1,28 @@
-Run:
+Start visdom server:
 ```
-$ python main.py --consolidate (--secder_mode --abs_mode)
+$ python -m visdom.server
+```
+
+Training without ewc:
+```
+$ python main.py
+```
+
+Training with original ewc:
+```
+$ python main.py --consolidate --lamda 40
+```
+
+Training with second derivative ewc:
+```
+$ python main.py --consolidate --secder_mode --abs_mode
 ```
 
 Result:
+
 ![Result](./arts/new_ewc.png)
+
+No worse or even better than original ewc.
 
 # pytorch-ewc
 Unofficial PyTorch implementation of DeepMind's paper [Overcoming Catastrophic Forgetting, PNAS 2017](https://arxiv.org/abs/1612.00796).
