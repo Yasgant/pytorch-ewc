@@ -105,11 +105,22 @@ class MLP(nn.Module):
         return {n: f.detach() for n, f in zip(param_names, fisher_diagonals)}
 
     def consolidate(self, fisher):
+        old_sum = 0
+        delta_sum = 0
         for n, p in self.named_parameters():
             n = n.replace('.', '__')
+            try:
+                with torch.no_grad():
+                    old = getattr(self, '{}_mean'.format(n))
+                    old_sum += old.abs().sum()
+                    delta_sum += (p - old).abs().sum()
+            except:
+                pass
             self.register_buffer('{}_mean'.format(n), p.data.clone())
             self.register_buffer('{}_fisher'
                                  .format(n), fisher[n].data.clone())
+        if old_sum != 0:
+            print(f"old_sum: {old_sum}, delta_sum: {delta_sum}, ratio: {delta_sum / old_sum}")
 
     def ewc_loss(self, cuda=False):
         try:
